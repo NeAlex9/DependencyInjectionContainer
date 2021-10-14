@@ -50,6 +50,7 @@
     <Compile Include="DependencyProvider\DependencyProvider.cs" />
     <Compile Include="DependencyProvider\IDependencyProvider.cs" />
     <Compile Include="DependenciesConfiguration\ImplementationData\ImplementationsTTL.cs" />
+    <Compile Include="DependencyProvider\IDependencyConfigurationValidator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DependenciesConfiguration\ImplementationData\ServiceImplementationNumber.cs" />

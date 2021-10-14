@@ -8,7 +8,7 @@ using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
 
 namespace DependencyInjectionContainer.DependencyProvider
 {
-    public class DependencyProvider : IDependencyProvider
+    public class DependencyProvider : IDependencyProvider, IDependencyConfigurationValidator
     {
         public IDependenciesConfiguration Configuration { get; private set; }
 
@@ -16,7 +16,14 @@ namespace DependencyInjectionContainer.DependencyProvider
         {
             this.Configuration = configuration;
         }
+
         public TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.None)
+            where TDependency : class
+        {
+            throw new NotImplementedException();
+        }
+
+        public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None)
         {
             throw new NotImplementedException();
         }
