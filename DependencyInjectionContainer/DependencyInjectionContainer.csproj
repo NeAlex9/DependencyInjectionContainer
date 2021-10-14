@@ -43,11 +43,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DependenciesConfiguration\DependenciesConfiguration.cs" />
+    <Compile Include="DependenciesConfiguration\IDependenciesConfiguration.cs" />
+    <Compile Include="DependenciesConfiguration\ImplementationData\ImplementationsContainer.cs" />
+    <Compile Include="DependencyKeyAttribute.cs" />
+    <Compile Include="DependencyProvider\DependencyProvider.cs" />
+    <Compile Include="DependencyProvider\IDependencyProvider.cs" />
+    <Compile Include="DependenciesConfiguration\ImplementationData\ImplementationsTTL.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DependenciesConfiguration\ImplementationData\ServiceImplementationNumber.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
