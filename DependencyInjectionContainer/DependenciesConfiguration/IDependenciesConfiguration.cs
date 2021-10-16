@@ -10,12 +10,15 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
 {
     public interface IDependenciesConfiguration
     {
-        void Register<TDependency, TImplementation>(ServiceImplementationNumber number = ServiceImplementationNumber.None,
-            ImplementationsTTL ttl = ImplementationsTTL.InstancePerDependency)  ///?????????
+        public Dictionary<Type, List<ImplementationsContainer>> DependenciesDictionary { get; }
+
+        void Register<TDependency, TImplementation>(ImplementationsTTL ttl,
+            ServiceImplementationNumber number = ServiceImplementationNumber.None)  ///?????????
             where TDependency : class
             where TImplementation : TDependency;
 
-        void Register(Type dependencyType, Type implementType, ServiceImplementationNumber number = ServiceImplementationNumber.None,
-            ImplementationsTTL ttl = ImplementationsTTL.InstancePerDependency);
+        void Register(Type dependencyType, Type implementType,
+            ImplementationsTTL ttl,
+            ServiceImplementationNumber number = ServiceImplementationNumber.None);
     }
 }

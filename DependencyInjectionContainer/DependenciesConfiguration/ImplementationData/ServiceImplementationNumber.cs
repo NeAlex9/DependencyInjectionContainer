@@ -1,6 +1,4 @@
-﻿
-
-namespace DependencyInjectionContainer.DependenciesConfiguration.ImplementationData
+﻿namespace DependencyInjectionContainer.DependenciesConfiguration.ImplementationData
 {
     public enum ServiceImplementationNumber
     {

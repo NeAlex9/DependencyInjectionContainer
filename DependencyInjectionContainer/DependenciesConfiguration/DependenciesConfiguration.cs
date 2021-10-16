@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
 using DependencyInjectionContainer.DependencyProvider;
+using DependencyInjectionContainer.DependencyProvider.ConfigValidator;
 
 namespace DependencyInjectionContainer.DependenciesConfiguration
 {
@@ -12,18 +13,21 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
     {
         public Dictionary<Type, List<ImplementationsContainer>> DependenciesDictionary { get; private set; }
 
-        public void Register<TDependency, TImplementation>(ServiceImplementationNumber number = ServiceImplementationNumber.None,
-            ImplementationsTTL ttl = ImplementationsTTL.InstancePerDependency)
-            where TDependency : class
-            where TImplementation : TDependency
+        public DependenciesConfiguration()
         {
-            Register(typeof(TDependency), typeof(TImplementation), number, ttl);
+            this.DependenciesDictionary = new Dictionary<Type, List<ImplementationsContainer>>();
         }
 
-        public void Register(Type dependencyType, Type implementType, ServiceImplementationNumber number = ServiceImplementationNumber.None,
-            ImplementationsTTL ttl = ImplementationsTTL.InstancePerDependency)
+        public void Register<TDependency, TImplementation>(ImplementationsTTL ttl,
+            ServiceImplementationNumber number = ServiceImplementationNumber.None) where TDependency : class where TImplementation : TDependency
         {
-            if (!dependencyType.IsAssignableFrom(implementType))
+            Register(typeof(TDependency), typeof(TImplementation), ttl, number);
+        }
+
+        public void Register(Type dependencyType, Type implementType, ImplementationsTTL ttl,
+            ServiceImplementationNumber number = ServiceImplementationNumber.None)
+        {
+            if (!IsDependency(implementType, dependencyType))
             {
                 throw new ArgumentException("Incompatible parameters");
             }
@@ -37,6 +41,11 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
             {
                 this.DependenciesDictionary.Add(dependencyType, new List<ImplementationsContainer>() { implContainer });
             }
+        }
+
+        public bool IsDependency(Type implementation, Type dependency)
+        {
+            return implementation.IsAssignableFrom(dependency) || implementation.GetInterfaces().Any(i => i.ToString() == dependency.ToString());
         }
     }
 }
