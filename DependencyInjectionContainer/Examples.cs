@@ -8,6 +8,8 @@ namespace DependencyInjectionContainer
 {
     public interface IRep { }
 
+    public class Rep : IRep { }
+
     public interface IInterface<TRep> where TRep : IRep { }
 
     public class Ex<TRep> : IInterface<TRep>
@@ -27,6 +29,12 @@ namespace DependencyInjectionContainer
 
     public class Email : IMessageSender
     {
+        public IRep Rep;
+        public Email(IRep rep)
+        {
+            this.Rep = rep;
+        }
+
         public string SendMessage()
         {
             throw new NotImplementedException();

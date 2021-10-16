@@ -52,7 +52,6 @@
     <Compile Include="DependencyProvider\DependencyProvider.cs" />
     <Compile Include="DependencyProvider\IDependencyProvider.cs" />
     <Compile Include="DependenciesConfiguration\ImplementationData\ImplementationsTTL.cs" />
-    <Compile Include="DependencyProvider\ConfigValidator\IValidator.cs" />
     <Compile Include="Examples.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

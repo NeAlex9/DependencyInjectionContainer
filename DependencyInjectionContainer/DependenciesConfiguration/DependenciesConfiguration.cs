@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
 using DependencyInjectionContainer.DependencyProvider;
-using DependencyInjectionContainer.DependencyProvider.ConfigValidator;
 
 namespace DependencyInjectionContainer.DependenciesConfiguration
 {
@@ -33,9 +32,16 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
             }
 
             var implContainer = new ImplementationsContainer(implementType, ttl, number);
-            if (this.DependenciesDictionary.TryGetValue(dependencyType, out List<ImplementationsContainer> implementations))
+            if (this.DependenciesDictionary.ContainsKey(dependencyType))
             {
-                implementations.Add(implContainer);
+                var index = this.DependenciesDictionary[dependencyType]
+                    .FindIndex(container => container.ImplementationsType == implementType);
+                if (index != -1)
+                {
+                    this.DependenciesDictionary[dependencyType].RemoveAt(index);
+                }
+
+                this.DependenciesDictionary[dependencyType].Add(implContainer);
             }
             else
             {
