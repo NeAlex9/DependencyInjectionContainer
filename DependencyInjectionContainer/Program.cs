@@ -16,16 +16,16 @@ namespace DependencyInjectionContainer
         static void Main(string[] args)
         {
             var config = new DependenciesConfiguration.DependenciesConfiguration();
-            //config.Register(typeof(IInterface<>), typeof(Ex<>), ImplementationsTTL.InstancePerDependency);
+            config.Register(typeof(IInterface<>), typeof(Ex<>), ImplementationsTTL.InstancePerDependency);
             //config.Register<IMessageSender, Letter>(ImplementationsTTL.Singleton);
             //config.Register(typeof(IMessageSender), typeof(Email), ImplementationsTTL.InstancePerDependency);
             //config.Register<IMessageSender, Letter>(ImplementationsTTL.Singleton);
             config.Register<IMessageSender, Email>(ImplementationsTTL.Singleton);
-            config.Register<IMessageSender, Letter>(ImplementationsTTL.Singleton);
+            config.Register<IMessageSender, Letter>(ImplementationsTTL.InstancePerDependency);
             config.Register<IRep, Rep>(ImplementationsTTL.Singleton);
             config.Register<IInterface<IRep>, Ex<IRep>>(ImplementationsTTL.InstancePerDependency);
             var dependencyProvider = new DependencyProvider.DependencyProvider(config);
-            // dependencyProvider.Resolve(typeof(IInterface<>));
+            //dependencyProvider.Resolve(typeof(IInterface<>));
             var t = dependencyProvider.Resolve<IInterface<IRep>>();
             //dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
             var rs = dependencyProvider.Resolve<IMessageSender>();

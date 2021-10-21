@@ -98,21 +98,19 @@ namespace DependencyInjectionContainer.DependencyProvider
                 var implementations = this.Configuration.DependenciesDictionary[dependencyType].Select(container => container.ImplementationsType);
                 result = implementations.Select(type => CreateInstance(type, number));
             }
-            else if (dependencyType.IsGenericType)
-            { 
-                var container = GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
-                container ??= GetImplementationsContainer(dependencyType, number);
-                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ? container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) : container.ImplementationsType, number);
-
-                if (container.TimeToLive == ImplementationsTTL.Singleton)
+            else
+            {
+                ImplementationsContainer container = null;
+                if (dependencyType.IsGenericType)
                 {
-                    this.Singletons.Add(dependencyType, result);
+                    container = GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
                 }
-            }
-            else 
-            { 
-                var container = GetImplementationsContainer(dependencyType, number);
-                result = CreateInstance(container.ImplementationsType, number);
+
+                container ??= GetImplementationsContainer(dependencyType, number);
+                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ? 
+                    container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) : 
+                    container.ImplementationsType, number);
+
                 if (container.TimeToLive == ImplementationsTTL.Singleton)
                 {
                     this.Singletons.Add(dependencyType, result);
