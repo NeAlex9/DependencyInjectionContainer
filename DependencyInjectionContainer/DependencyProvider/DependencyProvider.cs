@@ -44,7 +44,12 @@ namespace DependencyInjectionContainer.DependencyProvider
 
         private ImplementationsContainer GetImplementationsContainer(Type dependencyType, ServiceImplementationNumber number)
         {
-            return this.Configuration.DependenciesDictionary[dependencyType].Find(container => container.ImplNumber == number);
+            if (this.Configuration.DependenciesDictionary.ContainsKey(dependencyType))
+            {
+                return this.Configuration.DependenciesDictionary[dependencyType].FindLast(container => container.ImplNumber == number);
+            }
+
+            return null;
         }
 
         private object CreateInstance(Type implementationType, ServiceImplementationNumber number)
@@ -59,9 +64,21 @@ namespace DependencyInjectionContainer.DependencyProvider
             var generatedParams = new List<dynamic>();
             foreach (var parameterInfo in constructorParams)
             {
-                dynamic parameter = IsCustomType(parameterInfo.ParameterType) ? 
-                    CreateInstance(GetImplementationsContainer(parameterInfo.ParameterType, number).ImplementationsType, number) : 
-                    Activator.CreateInstance(parameterInfo.ParameterType);
+                dynamic parameter;
+                if (IsCustomType(parameterInfo.ParameterType))
+                {
+                    //parameterInfo.ParameterType.GetInterfaces()[0];
+                    /*var dependencyType = parameterInfo.ParameterType.IsGenericParameter
+                        ? parameterInfo.ParameterType.GetInterfaces()[0]
+                        : parameterInfo.ParameterType;*/
+                    var dependencyType = parameterInfo.ParameterType;
+                    var implementationContainer = GetImplementationsContainer(dependencyType, number);
+                    parameter = CreateInstance(implementationContainer.ImplementationsType, number);
+                }
+                else
+                {
+                    parameter = Activator.CreateInstance(parameterInfo.ParameterType);
+                }
 
                 generatedParams.Add(parameter);
             }
@@ -69,7 +86,7 @@ namespace DependencyInjectionContainer.DependencyProvider
             return constructor.Invoke(generatedParams.ToArray());
         }
 
-        public object Resolve(Type dependencyType, ServiceImplementationNumber number)
+        public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None)
         {
             object result;
             if (this.Singletons.ContainsKey(dependencyType))
@@ -81,8 +98,19 @@ namespace DependencyInjectionContainer.DependencyProvider
                 var implementations = this.Configuration.DependenciesDictionary[dependencyType].Select(container => container.ImplementationsType);
                 result = implementations.Select(type => CreateInstance(type, number));
             }
-            else
-            {
+            else if (dependencyType.IsGenericType)
+            { 
+                var container = GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
+                container ??= GetImplementationsContainer(dependencyType, number);
+                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ? container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) : container.ImplementationsType, number);
+
+                if (container.TimeToLive == ImplementationsTTL.Singleton)
+                {
+                    this.Singletons.Add(dependencyType, result);
+                }
+            }
+            else 
+            { 
                 var container = GetImplementationsContainer(dependencyType, number);
                 result = CreateInstance(container.ImplementationsType, number);
                 if (container.TimeToLive == ImplementationsTTL.Singleton)

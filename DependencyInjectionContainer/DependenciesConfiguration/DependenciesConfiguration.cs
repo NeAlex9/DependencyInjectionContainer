@@ -34,13 +34,6 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
             var implContainer = new ImplementationsContainer(implementType, ttl, number);
             if (this.DependenciesDictionary.ContainsKey(dependencyType))
             {
-                var index = this.DependenciesDictionary[dependencyType]
-                    .FindIndex(container => container.ImplementationsType == implementType);
-                if (index != -1)
-                {
-                    this.DependenciesDictionary[dependencyType].RemoveAt(index);
-                }
-
                 this.DependenciesDictionary[dependencyType].Add(implContainer);
             }
             else

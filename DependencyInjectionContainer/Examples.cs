@@ -10,16 +10,20 @@ namespace DependencyInjectionContainer
 
     public class Rep : IRep { }
 
-    public interface IInterface<TRep> where TRep : IRep { }
+    public interface IInterface<TRep> where TRep : IRep
+    {
+        TRep Fuck { get; }
+    }
 
     public class Ex<TRep> : IInterface<TRep>
         where TRep : IRep
     {
-        public IInterface<TRep> Field;
-        public Ex(IInterface<TRep> TImpl)
+        public Ex(TRep TImpl)
         {
-            this.Field = TImpl;
+            this.Fuck = TImpl;
         }
+
+        public TRep Fuck { get; }
     }
 
     public interface IMessageSender
