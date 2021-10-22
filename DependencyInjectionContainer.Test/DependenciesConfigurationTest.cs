@@ -50,7 +50,8 @@ namespace DependencyInjectionContainer.Test
             {
                 {
                     typeof(IMessageSender),
-                    new List<ImplementationsContainer>(){
+                    new List<ImplementationsContainer>()
+                    {
                         new ImplementationsContainer(typeof(Email), ImplementationsTTL.Singleton,
                             ServiceImplementationNumber.None),
                     }
@@ -87,13 +88,13 @@ namespace DependencyInjectionContainer.Test
                     }
                 },
                 {
-                typeof(IRep),
-                new List<ImplementationsContainer>
-                {
-                    new ImplementationsContainer(typeof(Rep), ImplementationsTTL.Singleton,
-                        ServiceImplementationNumber.None)
+                    typeof(IRep),
+                    new List<ImplementationsContainer>
+                    {
+                        new ImplementationsContainer(typeof(Rep), ImplementationsTTL.Singleton,
+                            ServiceImplementationNumber.None)
+                    }
                 }
-            }
             };
 
             this._configuration.Register<IMessageSender, Email>(ImplementationsTTL.Singleton);
@@ -131,6 +132,46 @@ namespace DependencyInjectionContainer.Test
             this._configuration.Register<IMessageSender, Email>(ImplementationsTTL.Singleton);
             this._configuration.Register<IRep, Rep>(ImplementationsTTL.Singleton);
             this._configuration.Register<IMessageSender, Email>(ImplementationsTTL.InstancePerDependency);
+            var expectedJSon = JsonConvert.SerializeObject(this._configuration.DependenciesDictionary);
+            var result = JsonConvert.SerializeObject(expected);
+
+            Assert.AreEqual(expectedJSon, result);
+        }
+
+        [Test]
+        public void Register_WithGenericType_ReplaceInContainer()
+        {
+            var expected = new Dictionary<Type, List<ImplementationsContainer>>()
+            {
+                {
+                    typeof(IMessageSender),
+                    new List<ImplementationsContainer>
+                    {
+                        new ImplementationsContainer(typeof(Email), ImplementationsTTL.InstancePerDependency,
+                            ServiceImplementationNumber.None)
+                    }
+                },
+                {
+                    typeof(IRep),
+                    new List<ImplementationsContainer>
+                    {
+                        new ImplementationsContainer(typeof(Rep), ImplementationsTTL.Singleton,
+                            ServiceImplementationNumber.None)
+                    }
+                },
+                {
+                    typeof(IInterface<IRep>),
+                    new List<ImplementationsContainer>
+                    {
+                        new ImplementationsContainer(typeof(Ex<IRep>), ImplementationsTTL.InstancePerDependency,
+                            ServiceImplementationNumber.None)
+                    }
+                }
+            };
+
+            this._configuration.Register<IMessageSender, Email>(ImplementationsTTL.InstancePerDependency);
+            this._configuration.Register<IRep, Rep>(ImplementationsTTL.Singleton);
+            this._configuration.Register<IInterface<IRep>, Ex<IRep>>(ImplementationsTTL.InstancePerDependency); ;
             var expectedJSon = JsonConvert.SerializeObject(this._configuration.DependenciesDictionary);
             var result = JsonConvert.SerializeObject(expected);
 

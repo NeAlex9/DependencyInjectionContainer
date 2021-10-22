@@ -96,6 +96,13 @@ namespace DependencyInjectionContainer.DependencyProvider
 
         }
 
+        private object ResolveGeneric(Type dependencyType, Type implementationsType, ServiceImplementationNumber number)
+        {
+            return CreateInstance(implementationsType.IsGenericTypeDefinition ?
+                implementationsType.MakeGenericType(dependencyType.GetGenericArguments()) :
+                implementationsType, number);
+        }
+
         public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None)
         {
             object result;
@@ -111,9 +118,7 @@ namespace DependencyInjectionContainer.DependencyProvider
             {
                 var container = GetImplementationsContainer(dependencyType, number);
                 container ??= GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
-                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ?
-                    container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) :
-                    container.ImplementationsType, number);
+                result = ResolveGeneric(dependencyType, container.ImplementationsType, number);
                 if (container.TimeToLive == ImplementationsTTL.Singleton) this.Singletons.Add(dependencyType, result);
             }
             else
