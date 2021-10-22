@@ -27,8 +27,8 @@ namespace DependencyInjectionContainer
             var dependencyProvider = new DependencyProvider.DependencyProvider(config);
             //dependencyProvider.Resolve(typeof(IInterface<>));
             var t = dependencyProvider.Resolve<IInterface<IRep>>();
-            //dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
-            var rs = dependencyProvider.Resolve<IMessageSender>();
+            IEnumerable фф = dependencyProvider.Resolve<IEnumerable<IMessageSender>>();
+            var rs = dependencyProvider.Resolve(typeof(IMessageSender));
             var ds = dependencyProvider.Resolve<IMessageSender>();
             var lst = dependencyProvider.Resolve<IMessageSender>();
             var s = rs == ds;

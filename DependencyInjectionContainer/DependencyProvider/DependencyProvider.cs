@@ -67,12 +67,7 @@ namespace DependencyInjectionContainer.DependencyProvider
                 dynamic parameter;
                 if (IsCustomType(parameterInfo.ParameterType))
                 {
-                    //parameterInfo.ParameterType.GetInterfaces()[0];
-                    /*var dependencyType = parameterInfo.ParameterType.IsGenericParameter
-                        ? parameterInfo.ParameterType.GetInterfaces()[0]
-                        : parameterInfo.ParameterType;*/
-                    var dependencyType = parameterInfo.ParameterType;
-                    var implementationContainer = GetImplementationsContainer(dependencyType, number);
+                    var implementationContainer = GetImplementationsContainer(parameterInfo.ParameterType, number);
                     parameter = CreateInstance(implementationContainer.ImplementationsType, number);
                 }
                 else
@@ -86,6 +81,21 @@ namespace DependencyInjectionContainer.DependencyProvider
             return constructor.Invoke(generatedParams.ToArray());
         }
 
+        private object ResolveIEnumerable(Type dependencyType, ServiceImplementationNumber number)
+        {
+            var implementationList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(dependencyType.GetGenericArguments()[0]));
+            this.Singletons.Select(elem => elem.Key == dependencyType).
+                ToList().
+                ForEach(implement => implementationList.Add(implement));
+            this.Singletons.Select(elem => elem.Key == dependencyType.GetGenericTypeDefinition()).
+                ToList().
+                ForEach(implement => implementationList.Add(implement));
+            var implementationTypes = this.Configuration.DependenciesDictionary[dependencyType.GetGenericArguments()[0]].Select(container => container.ImplementationsType);
+            implementationTypes.ToList().ForEach(type => implementationList.Add(CreateInstance(type, number)));
+            return implementationList;
+
+        }
+
         public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None)
         {
             object result;
@@ -95,26 +105,22 @@ namespace DependencyInjectionContainer.DependencyProvider
             }
             else if (IsIEnumerable(dependencyType))
             {
-                var implementations = this.Configuration.DependenciesDictionary[dependencyType].Select(container => container.ImplementationsType);
-                result = implementations.Select(type => CreateInstance(type, number));
+                result = ResolveIEnumerable(dependencyType, number);
+            }
+            else if (dependencyType.IsGenericType)
+            {
+                var container = GetImplementationsContainer(dependencyType, number);
+                container ??= GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
+                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ?
+                    container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) :
+                    container.ImplementationsType, number);
+                if (container.TimeToLive == ImplementationsTTL.Singleton) this.Singletons.Add(dependencyType, result);
             }
             else
             {
-                ImplementationsContainer container = null;
-                if (dependencyType.IsGenericType)
-                {
-                    container = GetImplementationsContainer(dependencyType.GetGenericTypeDefinition(), number);
-                }
-
-                container ??= GetImplementationsContainer(dependencyType, number);
-                result = CreateInstance(container.ImplementationsType.IsGenericTypeDefinition ? 
-                    container.ImplementationsType.MakeGenericType(dependencyType.GetGenericArguments()) : 
-                    container.ImplementationsType, number);
-
-                if (container.TimeToLive == ImplementationsTTL.Singleton)
-                {
-                    this.Singletons.Add(dependencyType, result);
-                }
+                var container = GetImplementationsContainer(dependencyType, number);
+                result = CreateInstance(container.ImplementationsType, number);
+                if (container.TimeToLive == ImplementationsTTL.Singleton) this.Singletons.Add(dependencyType, result);
             }
 
             return result;

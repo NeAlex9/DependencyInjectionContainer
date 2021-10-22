@@ -34,7 +34,15 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
             var implContainer = new ImplementationsContainer(implementType, ttl, number);
             if (this.DependenciesDictionary.ContainsKey(dependencyType))
             {
+                var index = this.DependenciesDictionary[dependencyType]
+                    .FindIndex(elem => elem.ImplementationsType == implContainer.ImplementationsType);
+                if (index != -1)
+                {
+                    this.DependenciesDictionary[dependencyType].RemoveAt(index);
+                }
+
                 this.DependenciesDictionary[dependencyType].Add(implContainer);
+
             }
             else
             {
@@ -42,7 +50,7 @@ namespace DependencyInjectionContainer.DependenciesConfiguration
             }
         }
 
-        public bool IsDependency(Type implementation, Type dependency)
+        private bool IsDependency(Type implementation, Type dependency)
         {
             return implementation.IsAssignableFrom(dependency) || implementation.GetInterfaces().Any(i => i.ToString() == dependency.ToString());
         }
