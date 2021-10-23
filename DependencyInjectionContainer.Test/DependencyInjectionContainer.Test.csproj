@@ -75,6 +75,7 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigValidatorTest.cs" />
     <Compile Include="DependenciesConfigurationTest.cs" />
     <Compile Include="DependencyInjectionContainerTest.cs" />
     <Compile Include="Examples.cs" />

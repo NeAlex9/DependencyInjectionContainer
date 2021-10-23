@@ -4,7 +4,10 @@ namespace DependencyInjectionContainer.Test
 {
     public interface IRep { }
 
-    public class Rep : IRep { }
+    public class Rep : IRep
+    {
+
+    }
 
     public interface IInterface<TRep> where TRep : IRep
     {

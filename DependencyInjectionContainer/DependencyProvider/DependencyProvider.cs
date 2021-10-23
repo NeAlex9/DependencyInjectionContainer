@@ -7,28 +7,25 @@ using System.Text;
 using System.Threading.Tasks;
 using DependencyInjectionContainer.DependenciesConfiguration;
 using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
+using DependencyInjectionContainer.DependencyProvider.ConfigValidator;
 
 namespace DependencyInjectionContainer.DependencyProvider
 {
     public class DependencyProvider : IDependencyProvider
     {
-        public IDependenciesConfiguration Configuration { get; private set; }
-        public Dictionary<Type, List<object>> Singletons { get; private set; }
+        private readonly IDependenciesConfiguration _configuration;
+        private Dictionary<Type, List<object>> _singletons;
 
         public DependencyProvider(IDependenciesConfiguration configuration)
         {
-            if (!Validate())
+            IConfigValidator configValidator = new ConfigValidator.ConfigValidator(configuration);
+            if (!configValidator.Validate())
             {
                 throw new ArgumentException("Wrong configuration");
             }
 
-            this.Singletons = new Dictionary<Type, List<object>>();
-            this.Configuration = configuration;
-        }
-
-        private bool Validate()
-        {
-            return true;
+            this._singletons = new Dictionary<Type, List<object>>();
+            this._configuration = configuration;
         }
 
         private bool IsIEnumerable(Type dependencyType)
@@ -44,9 +41,9 @@ namespace DependencyInjectionContainer.DependencyProvider
 
         private ImplementationsContainer GetImplementationsContainerLast(Type dependencyType, ServiceImplementationNumber number)
         {
-            if (this.Configuration.DependenciesDictionary.ContainsKey(dependencyType))
+            if (this._configuration.DependenciesDictionary.ContainsKey(dependencyType))
             {
-                return this.Configuration.DependenciesDictionary[dependencyType].FindLast(container => container.ImplNumber == number);
+                return this._configuration.DependenciesDictionary[dependencyType].FindLast(container => container.ImplNumber == number);
             }
 
             return null;
@@ -83,13 +80,13 @@ namespace DependencyInjectionContainer.DependencyProvider
 
         private void AddToSingletons(Type dependencyType, object implementation)
         {
-            if (this.Singletons.ContainsKey(dependencyType))
+            if (this._singletons.ContainsKey(dependencyType))
             {
-                this.Singletons[dependencyType].Add(implementation);
+                this._singletons[dependencyType].Add(implementation);
             }
             else
             {
-                this.Singletons = new Dictionary<Type, List<object>>()
+                this._singletons = new Dictionary<Type, List<object>>()
                 {
                     {
                         dependencyType, new List<object>() {implementation}
@@ -101,10 +98,10 @@ namespace DependencyInjectionContainer.DependencyProvider
         private List<ImplementationsContainer> GetRemainingToСreateContainers(Type dependencyType)
         {
             var remainingImplTypes = new List<ImplementationsContainer>();
-            var containers = this.Configuration.DependenciesDictionary[dependencyType];
+            var containers = this._configuration.DependenciesDictionary[dependencyType];
             foreach (var container in containers)
             {
-                if (!(this.Singletons.ContainsKey(dependencyType) && this.Singletons[dependencyType].Any(obj => obj.GetType() == container.ImplementationsType)))
+                if (!(this._singletons.ContainsKey(dependencyType) && this._singletons[dependencyType].Any(obj => obj.GetType() == container.ImplementationsType)))
                 {
                     remainingImplTypes.Add(container);
                 }
@@ -116,7 +113,7 @@ namespace DependencyInjectionContainer.DependencyProvider
         private IList CreateEnumerable(List<ImplementationsContainer> remainingToСreateContainers, Type dependencyType, ServiceImplementationNumber number)
         {
             var implementationList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(dependencyType));
-            this.Singletons.
+            this._singletons.
                 Where(keyValuePair => keyValuePair.Key == dependencyType).
                 Select(keyValuePair => keyValuePair.Value).
                 ToList().
@@ -136,9 +133,9 @@ namespace DependencyInjectionContainer.DependencyProvider
         public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None)
         {
             object result;
-            if (this.Singletons.ContainsKey(dependencyType))
+            if (this._singletons.ContainsKey(dependencyType))
             {
-                result = this.Singletons[dependencyType][this.Singletons[dependencyType].Count - 1];
+                result = this._singletons[dependencyType][this._singletons[dependencyType].Count - 1];
             }
             else if (IsIEnumerable(dependencyType))
             { 

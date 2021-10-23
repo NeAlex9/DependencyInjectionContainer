@@ -49,16 +49,14 @@ namespace DependencyInjectionContainer.Test
                                 new ImplementationsContainer(typeof(Rep), ImplementationsTTL.InstancePerDependency,
                                     ServiceImplementationNumber.None)
                             }
-
                         }
-
-                    });
+                });
             }
         }
         private IDependencyProvider _dependencyProvider;
         private MockRepository _mock;
 
-        public void Init(Dictionary<Type, List<ImplementationsContainer>> dict)
+        private void Init(Dictionary<Type, List<ImplementationsContainer>> dict)
         {
             this._mock = new MockRepository(MockBehavior.Default);
             var config = this._mock

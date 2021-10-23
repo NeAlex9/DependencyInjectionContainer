@@ -10,8 +10,6 @@ namespace DependencyInjectionContainer.DependencyProvider
 {
     public interface IDependencyProvider
     {
-        IDependenciesConfiguration Configuration { get; }
-
         TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.None)
             where TDependency : class;
 

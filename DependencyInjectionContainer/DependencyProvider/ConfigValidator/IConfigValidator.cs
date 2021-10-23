@@ -9,8 +9,6 @@ namespace DependencyInjectionContainer.DependencyProvider.ConfigValidator
 {
     public interface IConfigValidator
     {
-        IDependenciesConfiguration Configuration { get; }
-
         bool Validate();
     }
 }
