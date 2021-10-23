@@ -7,6 +7,7 @@ using DependencyInjectionContainer.DependenciesConfiguration;
 using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
 using DependencyInjectionContainer.DependencyProvider;
 using Moq;
+using Newtonsoft.Json;
 using NUnit;
 using NUnit.Framework;
 
@@ -44,11 +45,54 @@ namespace DependencyInjectionContainer.Test
                                 ServiceImplementationNumber.None)
                         }
 
+                    },
+                    {
+                        typeof(IRep),
+                        new List<ImplementationsContainer>
+                        {
+                            new ImplementationsContainer(typeof(Rep), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.None)
+                        }
+
                     }
                 });
             this._dependencyProvider = new DependencyProvider.DependencyProvider(config);
         }
 
-        public void 
+        [Test]
+        public void Resolve_GetSimpleImplementation_CorrectResults()
+        {
+            var excepted = JsonConvert.SerializeObject((new Letter()));
+
+            var result = JsonConvert.SerializeObject(this._dependencyProvider.Resolve<IMessageSender>());
+
+            Assert.AreEqual(excepted, result);
+        }
+
+        [Test]
+        public void Resolve_GetGenericImplementation_CorrectResults()
+        {
+            var expectedObject = new DependencyInjectionContainer.Ex<DependencyInjectionContainer.IRep>(new DependencyInjectionContainer.Rep());
+            var excepted = JsonConvert.SerializeObject(expectedObject);
+
+            var result = JsonConvert.SerializeObject(this._dependencyProvider.Resolve<IInterface<IRep>>());
+
+            Assert.AreEqual(excepted, result);
+        }
+
+        [Test]
+        public void Resolve_GetIEnumerable_CorrectResults()
+        {
+            IEnumerable<DependencyInjectionContainer.IMessageSender> expectedObject = new List<DependencyInjectionContainer.IMessageSender>()
+            {
+                new DependencyInjectionContainer.Email(new DependencyInjectionContainer.Rep()),
+                new DependencyInjectionContainer.Letter()
+            };
+            var excepted = JsonConvert.SerializeObject(expectedObject);
+
+            var result = JsonConvert.SerializeObject(this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>)));
+
+            Assert.AreEqual(excepted, result);
+        }
     }
 }
