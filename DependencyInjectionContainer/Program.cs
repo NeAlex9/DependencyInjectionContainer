@@ -15,7 +15,7 @@ namespace DependencyInjectionContainer
     {
         static void Main(string[] args)
         {
-            var config = new DependenciesConfiguration.DependenciesConfiguration();
+            /*var config = new DependenciesConfiguration.DependenciesConfiguration();
             config.Register(typeof(IInterface<>), typeof(Ex<>), ImplementationsTTL.InstancePerDependency);
             //config.Register<IMessageSender, Letter>(ImplementationsTTL.Singleton);
             //config.Register(typeof(IMessageSender), typeof(Email), ImplementationsTTL.InstancePerDependency);
@@ -32,7 +32,7 @@ namespace DependencyInjectionContainer
             var ds = dependencyProvider.Resolve<IMessageSender>();
             var lst = dependencyProvider.Resolve<IMessageSender>();
             var s = rs == ds;
-            Console.ReadLine();
+            Console.ReadLine();*/
         }
     }
 }
