@@ -10,9 +10,9 @@ namespace DependencyInjectionContainer.DependencyProvider
 {
     public interface IDependencyProvider
     {
-        TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.None)
+        TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.Any)
             where TDependency : class;
 
-        object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.None);
+        object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.Any);
     }
 }

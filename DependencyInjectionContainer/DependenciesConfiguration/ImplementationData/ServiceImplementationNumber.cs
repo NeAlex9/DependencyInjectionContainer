@@ -1,9 +1,13 @@
-﻿namespace DependencyInjectionContainer.DependenciesConfiguration.ImplementationData
+﻿using System;
+
+namespace DependencyInjectionContainer.DependenciesConfiguration.ImplementationData
 {
+    [Flags]
     public enum ServiceImplementationNumber
     {
-        None,
-        First,
-        Second
+        None = 1,
+        First = 2,
+        Second = 4,
+        Any = None | First | Second,
     }
 }

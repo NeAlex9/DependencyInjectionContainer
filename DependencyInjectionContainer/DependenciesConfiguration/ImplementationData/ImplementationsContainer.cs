@@ -5,9 +5,9 @@ namespace DependencyInjectionContainer.DependenciesConfiguration.ImplementationD
 {
     public class ImplementationsContainer
     {
-        public Type ImplementationsType { get; private set; }
-        public ImplementationsTTL TimeToLive { get; private set; }
-        public ServiceImplementationNumber ImplNumber { get; private set; }
+        public Type ImplementationsType { get; }
+        public ImplementationsTTL TimeToLive { get; }
+        public ServiceImplementationNumber ImplNumber { get; }
 
         public ImplementationsContainer(Type implementationsType, ImplementationsTTL timeToLive,
             ServiceImplementationNumber implNumber)

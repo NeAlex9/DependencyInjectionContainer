@@ -53,6 +53,78 @@ namespace DependencyInjectionContainer.Test
                 });
             }
         }
+        private static IEnumerable<TestCaseData> NamedConfigCaseData
+        {
+            get
+            {
+                yield return new TestCaseData(new Dictionary<Type, List<ImplementationsContainer>>()
+                {
+                    {
+                        typeof(IMessageSender),
+                        new List<ImplementationsContainer>()
+                        {
+                            new ImplementationsContainer(typeof(Email), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.First),
+                            new ImplementationsContainer(typeof(Letter), ImplementationsTTL.Singleton,
+                                ServiceImplementationNumber.Second)
+                        }
+                    },
+                    {
+                        typeof(IInterface<>),
+                        new List<ImplementationsContainer>
+                        {
+                            new ImplementationsContainer(typeof(Ex<>), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.Second)
+                        }
+
+                    },
+                    {
+                        typeof(IRep),
+                        new List<ImplementationsContainer>
+                        {
+                            new ImplementationsContainer(typeof(Rep), ImplementationsTTL.Singleton,
+                                ServiceImplementationNumber.First)
+                        }
+                    }
+                });
+            }
+        }
+        private static IEnumerable<TestCaseData> NamedSingletonConfigCaseData
+        {
+            get
+            {
+                yield return new TestCaseData(new Dictionary<Type, List<ImplementationsContainer>>()
+                {
+                    {
+                        typeof(IMessageSender),
+                        new List<ImplementationsContainer>()
+                        {
+                            new ImplementationsContainer(typeof(Email), ImplementationsTTL.Singleton,
+                                ServiceImplementationNumber.First),
+                            new ImplementationsContainer(typeof(Letter), ImplementationsTTL.Singleton,
+                                ServiceImplementationNumber.Second)
+                        }
+                    },
+                    {
+                        typeof(IInterface<>),
+                        new List<ImplementationsContainer>
+                        {
+                            new ImplementationsContainer(typeof(Ex<>), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.Second)
+                        }
+
+                    },
+                    {
+                        typeof(IRep),
+                        new List<ImplementationsContainer>
+                        {
+                            new ImplementationsContainer(typeof(Rep), ImplementationsTTL.Singleton,
+                                ServiceImplementationNumber.First)
+                        }
+                    }
+                });
+            }
+        }
         private IDependencyProvider _dependencyProvider;
         private MockRepository _mock;
 
@@ -136,6 +208,38 @@ namespace DependencyInjectionContainer.Test
             List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
 
             Assert.That(letter, Is.EqualTo(collection[0]));
+        }
+       
+        [TestCaseSource(nameof(NamedConfigCaseData))]
+        public void Resolve_GetNamedInstance_CorrectResult(Dictionary<Type, List<ImplementationsContainer>> dict)
+        {
+            Init(dict);
+
+            var email = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First);
+            List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
+            var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second);
+            var letterWithNone = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.None);
+
+            Assert.That(email, Is.Not.EqualTo(new Email(new Rep())));
+            Assert.That(letter, Is.EqualTo(collection[1]));
+            Assert.That(letterWithNone, Is.EqualTo(collection[1]));
+        }
+
+        [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
+        public void Resolve_GetSingletonNamedInstance_CorrectResult(Dictionary<Type, List<ImplementationsContainer>> dict)
+        {
+            Init(dict);
+
+            var email = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First);
+            List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
+            var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second);
+            var letterWithNone = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.None);
+            var rep = this._dependencyProvider.Resolve<IRep>();
+            
+            Assert.That(email, Is.EqualTo(collection[0]));
+            Assert.That(letter, Is.EqualTo(collection[1]));
+            Assert.That(letterWithNone, Is.EqualTo(collection[1]));
+            Assert.That(rep, Is.EqualTo((collection[0] as Email)?.Rep));
         }
     }
 }
