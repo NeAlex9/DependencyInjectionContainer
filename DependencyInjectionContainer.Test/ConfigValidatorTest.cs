@@ -123,9 +123,7 @@ namespace DependencyInjectionContainer.Test
         {
             this.Init(dict);
 
-            var actual = this._configValidator.Validate();
-
-            Assert.That(actual, Is.EqualTo(false));
+            Assert.IsFalse(this._configValidator.Validate());
         }
     }
 }

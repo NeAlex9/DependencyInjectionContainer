@@ -21,7 +21,7 @@ namespace DependencyInjectionContainer.Test
         {
             get
             {
-                yield return new TestCaseData(new Dictionary<Type, List<ImplementationsContainer>>() 
+                yield return new TestCaseData(new Dictionary<Type, List<ImplementationsContainer>>()
                 {
                         {
                             typeof(IMessageSender),
@@ -102,7 +102,9 @@ namespace DependencyInjectionContainer.Test
                             new ImplementationsContainer(typeof(Email), ImplementationsTTL.Singleton,
                                 ServiceImplementationNumber.First),
                             new ImplementationsContainer(typeof(Letter), ImplementationsTTL.Singleton,
-                                ServiceImplementationNumber.Second)
+                                ServiceImplementationNumber.Second),
+                            new ImplementationsContainer(typeof(Chat), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.None)
                         }
                     },
                     {
@@ -135,6 +137,23 @@ namespace DependencyInjectionContainer.Test
                 .Of<IDependenciesConfiguration>()
                 .First(elem => elem.DependenciesDictionary == dict);
             this._dependencyProvider = new DependencyProvider.DependencyProvider(config);
+        }
+
+        [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
+        public void Resolve_GetInstanceWithIEnumerableInConstructor_CorrectResults(Dictionary<Type, List<ImplementationsContainer>> dict)
+        {
+            Init(dict);
+            IEnumerable<IRep> reps = new List<IRep>()
+            {
+                new Rep()
+            };
+            var expectedInstance = new Chat(reps);
+            var excepted = JsonConvert.SerializeObject(expectedInstance);
+
+            var actualInstance = this._dependencyProvider.Resolve<IMessageSender>();
+            var result = JsonConvert.SerializeObject(actualInstance);
+
+            Assert.AreEqual(excepted, result);
         }
 
         [TestCaseSource(nameof(CaseData))]
@@ -209,7 +228,7 @@ namespace DependencyInjectionContainer.Test
 
             Assert.That(letter, Is.EqualTo(collection[0]));
         }
-       
+
         [TestCaseSource(nameof(NamedConfigCaseData))]
         public void Resolve_GetNamedInstance_CorrectResult(Dictionary<Type, List<ImplementationsContainer>> dict)
         {
@@ -235,7 +254,7 @@ namespace DependencyInjectionContainer.Test
             var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second);
             var letterWithNone = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.None);
             var rep = this._dependencyProvider.Resolve<IRep>();
-            
+
             Assert.That(email, Is.EqualTo(collection[0]));
             Assert.That(letter, Is.EqualTo(collection[1]));
             Assert.That(letterWithNone, Is.EqualTo(collection[1]));

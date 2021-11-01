@@ -30,30 +30,33 @@ namespace DependencyInjectionContainer.DependencyProvider.ConfigValidator
         {
             this._nestedTypes.Push(instanceType);
             var constructors = instanceType.GetConstructors(BindingFlags.Instance | BindingFlags.Public);
-            bool canBeCreated = true;
             foreach (var constructor in constructors)
             {
-                canBeCreated = true;
                 var requiredParams = constructor.GetParameters();
-                for (int i = 0; i < requiredParams.Length; i++)
+                foreach (var parameter in requiredParams)
                 {
-                    var parameterType = requiredParams[i].ParameterType.ContainsGenericParameters
-                        ? requiredParams[i].ParameterType.GetInterfaces()[0]
-                        : requiredParams[i].ParameterType;
-                    if (!parameterType.IsInterface ||
-                        !IsInContainer(parameterType) ||
-                        this._nestedTypes.Contains(parameterType))
+                    Type parameterType;
+                    if (parameter.ParameterType.ContainsGenericParameters)
                     {
-                        canBeCreated = false;
-                        break;
+                        parameterType = parameter.ParameterType.GetInterfaces()[0];
                     }
-                }
+                    else if (parameter.ParameterType.GetInterfaces().Any(i => i.Name == "IEnumerable"))
+                    {
+                        parameterType = parameter.ParameterType.GetGenericArguments()[0];
+                    }
+                    else
+                    {
+                        parameterType = parameter.ParameterType;
+                    }
 
-                if (canBeCreated) break;
+                    if (parameterType.IsInterface && IsInContainer(parameterType)) continue;
+                    this._nestedTypes.Pop();
+                    return false;
+                }
             }
 
             this._nestedTypes.Pop();
-            return canBeCreated;
+            return true;
         }
 
         public bool Validate()

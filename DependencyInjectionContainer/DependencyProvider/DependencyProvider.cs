@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using DependencyInjectionContainer.DependenciesConfiguration;
@@ -14,7 +15,7 @@ namespace DependencyInjectionContainer.DependencyProvider
     public class DependencyProvider : IDependencyProvider
     {
         private readonly IDependenciesConfiguration _configuration;
-        private Dictionary<Type, List<SingletonContainer>> _singletons;
+        private readonly Dictionary<Type, List<SingletonContainer>> _singletons;
 
         public DependencyProvider(IDependenciesConfiguration configuration)
         {
@@ -31,44 +32,45 @@ namespace DependencyInjectionContainer.DependencyProvider
         public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.Any)
         {
             object result;
-            if (IsContainNamedSingleton(dependencyType, number))
+            if (DefineObjectType(dependencyType, number) == "Singleton")
             {
                 result = this._singletons[dependencyType].FindLast(container => container.ImplNumber.HasFlag(number)).Instance;
             }
-            else if (IsIEnumerable(dependencyType))
+            else if (DefineObjectType(dependencyType, number) == "IEnumerable")
             {
                 var remainingToCreateContainers = GetRemainingTypesToСreateContainers(dependencyType.GetGenericArguments()[0]);
                 var implementations = CreateEnumerable(remainingToCreateContainers, dependencyType.GetGenericArguments()[0]);
                 foreach (var container in remainingToCreateContainers.
                     Select(container => container).
-                    Where(container => container.TimeToLive == ImplementationsTTL.Singleton))    ////// check inner instances
+                    Where(container => container.TimeToLive == ImplementationsTTL.Singleton))
                 {
                     object requiredImplementation = null;
                     foreach (var implementation in implementations)
                     {
+
                         if (implementation.GetType() == container.ImplementationsType)
                             requiredImplementation = implementation;
                     }
 
-                    if (requiredImplementation is not null) 
+                    if (requiredImplementation is not null)
                         this.AddToSingletons(dependencyType.GetGenericArguments()[0], requiredImplementation, number);
                 }
 
                 result = implementations;
             }
-            else if (dependencyType.IsGenericType)
+            else if (DefineObjectType(dependencyType, number) == "Generic")
             {
                 var container = GetImplementationsContainerLast(dependencyType, number);
                 container ??= GetImplementationsContainerLast(dependencyType.GetGenericTypeDefinition(), number);
                 result = CreateGeneric(dependencyType, container.ImplementationsType);
-                if (container.TimeToLive == ImplementationsTTL.Singleton) 
+                if (container.TimeToLive == ImplementationsTTL.Singleton)
                     this.AddToSingletons(dependencyType, result, number);
             }
             else
             {
                 var container = GetImplementationsContainerLast(dependencyType, number);
                 result = CreateInstance(container.ImplementationsType);
-                if (container.TimeToLive == ImplementationsTTL.Singleton) 
+                if (container.TimeToLive == ImplementationsTTL.Singleton)
                     this.AddToSingletons(dependencyType, result, number);
             }
 
@@ -81,15 +83,29 @@ namespace DependencyInjectionContainer.DependencyProvider
             return (TDependency)Resolve(typeof(TDependency), number);
         }
 
+        private string DefineObjectType(Type type, ServiceImplementationNumber number)
+        {
+            if (this.IsContainNamedSingleton(type, number))
+            {
+                return "Singleton";
+            }
+
+            if (IsIEnumerable(type))
+            {
+                return "IEnumerable";
+            }
+
+            if (type.IsGenericType)
+            {
+                return "Generic";
+            }
+
+            return "Simple";
+        }
+
         private bool IsIEnumerable(Type dependencyType)
         {
             return dependencyType.GetInterfaces().Any(i => i.Name == "IEnumerable");
-        }
-
-        private bool IsCustomType(Type type)
-        {
-            var systemTypes = typeof(Assembly).Assembly.GetExportedTypes().ToList();
-            return (type.IsClass || type.IsInterface) && !type.IsArray && !systemTypes.Contains(type);
         }
 
         private ImplementationsContainer GetImplementationsContainerLast(Type dependencyType, ServiceImplementationNumber number)
@@ -110,31 +126,32 @@ namespace DependencyInjectionContainer.DependencyProvider
 
         private object CreateInstance(Type implementationType)
         {
-            var constructor = implementationType.GetConstructors(BindingFlags.Instance | BindingFlags.Public)?.FirstOrDefault();
-            if (constructor is null)
+            var constructors = implementationType.GetConstructors(BindingFlags.Instance | BindingFlags.Public);
+            foreach (var constructor in constructors)
             {
-                throw new NullReferenceException("constructor is private");
+                var constructorParams = constructor.GetParameters();
+                var generatedParams = new List<dynamic>();
+                foreach (var parameterInfo in constructorParams)
+                {
+                    dynamic parameter;
+                    if (parameterInfo.ParameterType.IsInterface)
+                    {
+                        var implementationContainer = GetImplementationsContainerLast(parameterInfo.ParameterType,
+                            ServiceImplementationNumber.Any);
+                        parameter = Resolve(parameterInfo.ParameterType);
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    generatedParams.Add(parameter);
+                }
+
+                return constructor.Invoke(generatedParams.ToArray());
             }
 
-            var constructorParams = constructor.GetParameters();
-            var generatedParams = new List<dynamic>();
-            foreach (var parameterInfo in constructorParams)
-            {
-                dynamic parameter;
-                if (IsCustomType(parameterInfo.ParameterType))
-                {
-                    var implementationContainer = GetImplementationsContainerLast(parameterInfo.ParameterType, ServiceImplementationNumber.Any);
-                    parameter = CreateInstance(implementationContainer.ImplementationsType);
-                }
-                else
-                {
-                    parameter = Activator.CreateInstance(parameterInfo.ParameterType);
-                }
-
-                generatedParams.Add(parameter);
-            }
-
-            return constructor.Invoke(generatedParams.ToArray());
+            throw new ArgumentException("Cannot create instance of class");
         }
 
         private void AddToSingletons(Type dependencyType, object implementation, ServiceImplementationNumber number)
@@ -145,12 +162,10 @@ namespace DependencyInjectionContainer.DependencyProvider
             }
             else
             {
-                this._singletons = new Dictionary<Type, List<SingletonContainer>>()
+                this._singletons.Add(dependencyType, new List<SingletonContainer>()
                 {
-                    {
-                        dependencyType, new List<SingletonContainer>() {new SingletonContainer(implementation, number)}
-                    }
-                };
+                    new SingletonContainer(implementation, number)
+                });
             }
         }
 

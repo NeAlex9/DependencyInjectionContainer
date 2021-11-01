@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace DependencyInjectionContainer.Test
 {
@@ -11,7 +12,7 @@ namespace DependencyInjectionContainer.Test
 
     public interface IInterface<TRep> where TRep : IRep
     {
-        TRep Fuck { get; }
+        TRep F { get; }
     }
 
     public class Ex<TRep> : IInterface<TRep>
@@ -19,10 +20,10 @@ namespace DependencyInjectionContainer.Test
     {
         public Ex(TRep TImpl)
         {
-            this.Fuck = TImpl;
+            this.F = TImpl;
         }
 
-        public TRep Fuck { get; }
+        public TRep F { get; }
     }
 
     public interface IMessageSender
@@ -36,6 +37,20 @@ namespace DependencyInjectionContainer.Test
         public Email(IRep rep)
         {
             this.Rep = rep;
+        }
+
+        public string SendMessage()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class Chat : IMessageSender
+    {
+        public IEnumerable<IRep> Reps;
+        public Chat(IEnumerable<IRep> reps)
+        {
+            this.Reps = reps;
         }
 
         public string SendMessage()
