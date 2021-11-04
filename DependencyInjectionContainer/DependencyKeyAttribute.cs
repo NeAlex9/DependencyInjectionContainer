@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
-using DependencyInjectionContainer.DependencyProvider;
 
 namespace DependencyInjectionContainer
 {
-    [System.AttributeUsage(System.AttributeTargets.Class)]
-    public class DependencyKeyAttribute : System.Attribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class DependencyKeyAttribute : Attribute
     {
-        public ServiceImplementationNumber ImplNumber { get; private set; }
+        public ServiceImplementationNumber ImplNumber { get; }
 
         public DependencyKeyAttribute(ServiceImplementationNumber number)
         {

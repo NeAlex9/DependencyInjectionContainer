@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DependencyInjectionContainer.DependenciesConfiguration.ImplementationData;
 
 namespace DependencyInjectionContainer.Test
 {
@@ -62,6 +63,20 @@ namespace DependencyInjectionContainer.Test
     public class Letter : IMessageSender
     {
         public string SendMessage()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class Messanger : ICloneable
+    {
+        public IMessageSender Email;
+        public Messanger([DependencyKey(ServiceImplementationNumber.First)] IMessageSender email)
+        {
+            this.Email = email;
+        }
+
+        public object Clone()
         {
             throw new NotImplementedException();
         }

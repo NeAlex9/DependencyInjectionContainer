@@ -104,7 +104,15 @@ namespace DependencyInjectionContainer.Test
                             new ImplementationsContainer(typeof(Letter), ImplementationsTTL.Singleton,
                                 ServiceImplementationNumber.Second),
                             new ImplementationsContainer(typeof(Chat), ImplementationsTTL.InstancePerDependency,
-                                ServiceImplementationNumber.None)
+                                ServiceImplementationNumber.None),
+                        }
+                    },
+                    {
+                        typeof(ICloneable),
+                        new List<ImplementationsContainer>()
+                        {
+                            new ImplementationsContainer(typeof(Messanger), ImplementationsTTL.InstancePerDependency,
+                                ServiceImplementationNumber.None),
                         }
                     },
                     {
@@ -137,6 +145,17 @@ namespace DependencyInjectionContainer.Test
                 .Of<IDependenciesConfiguration>()
                 .First(elem => elem.DependenciesDictionary == dict);
             this._dependencyProvider = new DependencyProvider.DependencyProvider(config);
+        }
+
+        [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
+        public void Resolve_GetServiceNumberInConstructor_CorrectResults(Dictionary<Type, List<ImplementationsContainer>> dict)
+        {
+            Init(dict);
+            var expectedInstance = new Messanger(new Email(new Rep()));
+            var excepted = JsonConvert.SerializeObject(expectedInstance);
+            var actualInstance = this._dependencyProvider.Resolve<ICloneable>();
+            var result = JsonConvert.SerializeObject(actualInstance);
+            Assert.AreEqual(excepted, result);
         }
 
         [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
