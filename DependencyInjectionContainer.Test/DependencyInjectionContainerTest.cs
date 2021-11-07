@@ -289,7 +289,7 @@ namespace DependencyInjectionContainer.Test
             Assert.That(foreignEmail.Result, Is.EqualTo(email));
 
             var listFromOtherThread = Task.Run(() => (IEnumerable<IMessageSender>)this._dependencyProvider.Resolve<IEnumerable<IMessageSender>>());
-            var list = (IEnumerable<IMessageSender>) this._dependencyProvider.Resolve<IEnumerable<IMessageSender>>();
+            var list = this._dependencyProvider.Resolve<IEnumerable<IMessageSender>>();
 
             listFromOtherThread.Wait();
             foreignEmail.Wait();
