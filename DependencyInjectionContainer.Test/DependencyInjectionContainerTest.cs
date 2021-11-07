@@ -204,12 +204,12 @@ namespace DependencyInjectionContainer.Test
             Init(dict);
             IEnumerable<IMessageSender> expectedObject = new List<IMessageSender>()
             {
-                new Letter(),
                 new Email(new Rep()),
+                new Letter(),
             };
             var excepted = JsonConvert.SerializeObject(expectedObject);
 
-            var letter = this._dependencyProvider.Resolve<IMessageSender>();
+            //var letter = this._dependencyProvider.Resolve<IMessageSender>();
             IEnumerable collection = (IEnumerable<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
             var result = JsonConvert.SerializeObject(collection);
             Assert.AreEqual(excepted, result);
@@ -245,7 +245,7 @@ namespace DependencyInjectionContainer.Test
             var letter = this._dependencyProvider.Resolve<IMessageSender>();
             List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
 
-            Assert.That(letter, Is.EqualTo(collection[0]));
+            Assert.That(letter, Is.EqualTo(collection[1]));
         }
 
         [TestCaseSource(nameof(NamedConfigCaseData))]
@@ -256,11 +256,11 @@ namespace DependencyInjectionContainer.Test
             var email = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First);
             List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
             var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second);
-            var letterWithNone = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.None);
+            var letterWithAny = this._dependencyProvider.Resolve<IMessageSender>();
 
             Assert.That(email, Is.Not.EqualTo(new Email(new Rep())));
             Assert.That(letter, Is.EqualTo(collection[1]));
-            Assert.That(letterWithNone, Is.EqualTo(collection[1]));
+            Assert.That(letterWithAny, Is.EqualTo(collection[1]));
         }
 
         [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
@@ -270,14 +270,31 @@ namespace DependencyInjectionContainer.Test
 
             var email = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First);
             List<IMessageSender> collection = (List<IMessageSender>)this._dependencyProvider.Resolve(typeof(IEnumerable<IMessageSender>));
-            var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second);
-            var letterWithNone = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.None);
+            var letter = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.Second); 
             var rep = this._dependencyProvider.Resolve<IRep>();
 
             Assert.That(email, Is.EqualTo(collection[0]));
             Assert.That(letter, Is.EqualTo(collection[1]));
-            Assert.That(letterWithNone, Is.EqualTo(collection[1]));
             Assert.That(rep, Is.EqualTo((collection[0] as Email)?.Rep));
+        }
+
+        [TestCaseSource(nameof(NamedSingletonConfigCaseData))]
+        public void Resolve_GetSingletonNamedInstanceFromOtherThreads_CorrectResult(Dictionary<Type, List<ImplementationsContainer>> dict)
+        {
+            Init(dict);
+
+            var foreignEmail = Task.Run(() => this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First));
+            var email = this._dependencyProvider.Resolve<IMessageSender>(ServiceImplementationNumber.First);
+
+            Assert.That(foreignEmail.Result, Is.EqualTo(email));
+
+            var listFromOtherThread = Task.Run(() => (IEnumerable<IMessageSender>)this._dependencyProvider.Resolve<IEnumerable<IMessageSender>>());
+            var list = (IEnumerable<IMessageSender>) this._dependencyProvider.Resolve<IEnumerable<IMessageSender>>();
+
+            listFromOtherThread.Wait();
+            foreignEmail.Wait();
+            Assert.That(listFromOtherThread.Result.ElementAt(0), Is.EqualTo(list.ElementAt(0)));
+            Assert.That(listFromOtherThread.Result.ElementAt(1), Is.EqualTo(list.ElementAt(1)));
         }
     }
 }

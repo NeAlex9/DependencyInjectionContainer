@@ -30,6 +30,12 @@ namespace DependencyInjectionContainer.DependencyProvider
             this._configuration = configuration;
         }
 
+        public TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.Any)
+            where TDependency : class
+        {
+            return (TDependency)Resolve(typeof(TDependency), number);
+        }
+
         public object Resolve(Type dependencyType, ServiceImplementationNumber number = ServiceImplementationNumber.Any)
         {
             object result;
@@ -41,58 +47,32 @@ namespace DependencyInjectionContainer.DependencyProvider
             {
                 ImplementationsContainer container = GetImplContainerByDependencyType(dependencyType, number);
                 Type requiredType = GetGeneratedType(dependencyType, container.ImplementationsType);
-                result = this.ResolveNonIEnumerable(container, dependencyType);
+                result = this.ResolveNonIEnumerable(requiredType, container.TimeToLive, dependencyType, container.ImplNumber);
             }
 
             return result;
         }
 
-        private object GetSingleton(ImplementationsContainer container, Type dependencyType)
+        private object ResolveNonIEnumerable(Type implType, ImplementationsTTL ttl,  Type dependencyType,
+            ServiceImplementationNumber number)
         {
-            if (!this._singletons.ContainsKey(dependencyType) ||
-                !TryGetSingletonInstance(this._singletons[dependencyType], container.ImplementationsType, out object instance))
+            if (ttl != ImplementationsTTL.Singleton)
             {
-                return CreateInstance(container.ImplementationsType);
+                return CreateInstance(implType);
             }
 
-            return instance;
-        }
-
-        private object ResolveNonIEnumerable(ImplementationsContainer container, Type dependencyType)
-        {
-            object result;
-            if (container.TimeToLive != ImplementationsTTL.Singleton)
+            lock (this._configuration)
             {
-                result = CreateInstance(container.ImplementationsType);
-            }
-            else
-            {
-                lock (this._singletons)
+                if (IsInSingletons(dependencyType, implType, number))
                 {
-                    var singleton = this.GetSingleton(container, dependencyType);
-                    if (!this._singletons.ContainsKey(dependencyType) || !TryGetSingletonInstance(this._singletons[dependencyType], container.ImplementationsType, out object instance))
-                    {
-                        this.AddToSingletons(dependencyType, singleton, container.ImplNumber);
-                    }
-
-                    result = singleton;
+                    return this._singletons[dependencyType]
+                        .Find(singletonContainer => number.HasFlag(singletonContainer.ImplNumber)).Instance;
                 }
+
+                var result = CreateInstance(implType);
+                this.AddToSingletons(dependencyType, result, number);
+                return result;
             }
-
-            return result;
-        }
-
-        public TDependency Resolve<TDependency>(ServiceImplementationNumber number = ServiceImplementationNumber.Any)
-            where TDependency : class
-        {
-            return (TDependency)Resolve(typeof(TDependency), number);
-        }
-
-        private bool TryGetSingletonInstance(List<SingletonContainer> singletonContainers, Type requiredType, out object instance)
-        {
-            instance = singletonContainers.
-                Find(singletonContainer => singletonContainer.Instance.GetType() == requiredType);
-            return instance is null;
         }
 
         private ImplementationsContainer GetImplContainerByDependencyType(Type dependencyType, ServiceImplementationNumber number)
@@ -102,7 +82,6 @@ namespace DependencyInjectionContainer.DependencyProvider
             {
                 container = GetImplementationsContainerLast(dependencyType, number);
                 container ??= GetImplementationsContainerLast(dependencyType.GetGenericTypeDefinition(), number);
-
             }
             else
             {
@@ -151,7 +130,6 @@ namespace DependencyInjectionContainer.DependencyProvider
             if (dependencyType.IsGenericType && implementationType.IsGenericTypeDefinition)
             {
                 return implementationType.MakeGenericType(dependencyType.GetGenericArguments());
-
             }
 
             return implementationType;
@@ -163,7 +141,8 @@ namespace DependencyInjectionContainer.DependencyProvider
             var implementationsContainers = this._configuration.DependenciesDictionary[dependencyType];
             foreach (var implementationContainer in implementationsContainers)
             {
-                var instance = this.ResolveNonIEnumerable(implementationContainer, dependencyType);
+                var instance = this.ResolveNonIEnumerable(implementationContainer.ImplementationsType,
+                    implementationContainer.TimeToLive, dependencyType, implementationContainer.ImplNumber);
                 implementationList.Add(instance);
             }
 
@@ -195,6 +174,12 @@ namespace DependencyInjectionContainer.DependencyProvider
                     new SingletonContainer(implementation, number)
                 });
             }
+        }
+
+        private bool IsInSingletons(Type dependencyType, Type implType, ServiceImplementationNumber number)
+        {
+            var lst = this._singletons.ContainsKey(dependencyType) ? this._singletons[dependencyType] : null;
+            return lst?.Find(container => number.HasFlag(container.ImplNumber) && container.Instance.GetType() == implType) is not null;
         }
     }
 }
